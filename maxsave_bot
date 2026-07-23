@@ -1,0 +1,58 @@
+from aiogram import Bot, Dispatcher
+from aiogram.filters import Command
+from aiogram.types import Message, FSInputFile
+import asyncio
+from yt_dlp import YoutubeDL
+import os
+
+TOKEN = "8079652822:AAHh4Qx-gBmUe7dyK2RZA6mNLXNmAPW6RUY"
+
+bot = Bot(TOKEN)
+dp = Dispatcher()
+
+
+def download_video(url):
+    ydl_opts = {
+        "outtmpl": "video.%(ext)s",
+        "format": "best"
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        filename = ydl.prepare_filename(info)
+        return filename
+
+
+@dp.message(Command("start"))
+async def start(message: Message):
+    await message.answer("Instagram linkini yuboring.")
+
+
+@dp.message()
+async def download(message: Message):
+
+    url = message.text
+
+    await message.answer("⏳ Video yuklanmoqda...")
+
+    try:
+        filename = download_video(url)
+
+        video = FSInputFile(filename)
+
+        await message.answer_video(
+            video=video,
+            caption="✅ Tayyor!"
+        )
+
+        os.remove(filename)
+
+    except Exception as e:
+        await message.answer(f"❌ Xatolik:\n{e}")
+
+
+async def main():
+    await dp.start_polling(bot)
+
+
+asyncio.run(main())
